@@ -15,17 +15,10 @@ module.exports = {
   // ******************************
   isAuth: async function(req, res, next) {
     if (req.user) {
-      const user =  await User.findOne({ '_id' : req.user._id }, function(err, data) {``
-        if (err) throw err;
-        return data;
-      })
-      const isPremium = user.account && user.account === "premium" ? true : false;
-      const isLimitReached = user.slots && user.slots.length >= 2 ? true : false;
-      res.locals.user = user;
+      res.locals.user = req.user;
       res.locals.isLoggedIn = true;
-      res.locals.isPremium = isPremium;
-      res.locals.isLimitReached = isLimitReached;
     } else {
+      res.locals.user = null;
       res.locals.isLoggedIn = false;
     }
     next();
@@ -34,11 +27,13 @@ module.exports = {
   // googleCallback()
   // ******************************
   googleCallback: function(req, accessToken, refreshToken, profile, done) {
-    const email = profile.emails[0].value === "bonandrion@gmail.com";
-    if (err) {
-      return done(err);
+    const checkEmail = profile.emails[0].value === "bonandrion@gmail.com";
+    const user = profile;
+    if (checkEmail) {
+      return done(null, user);
     } else {
-      return done(err);
+      req.logout();
+      return done(null);
     }
   },
   // ******************************

@@ -2,15 +2,11 @@ const express = require('express');
 const url  = require('url');
 const router = express.Router();
 const { dump } = require('dumper.js');
-// const _ = require('lodash');
+const _ = require('lodash');
 // const User = require('../models/user');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { isAuth, googleCallback } = require('./utils');
-
-// console.log(process.env.port);
-// console.log(process.env.PORT);
-// console.log(process.env.GOOGLE_CALLBACK_URL);
 
 // ******************************
 // Passport
@@ -19,21 +15,19 @@ const port = process.env.PORT ? 'http://one.com' : 'http://localhost:3000';
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: `http://localhost:3000/auth/google/callback`,
+  callbackURL: port + process.env.GOOGLE_CALLBACK_URL,
   passReqToCallback: true
 },
 function(req, accessToken, refreshToken, profile, done) {
   googleCallback(req, accessToken, refreshToken, profile, done);
 }
 ));
-passport.serializeUser(function(user, done) { done(null, user); });
-passport.deserializeUser(function(user, done) { done(null, user); });
-
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-}); 
-
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+passport.deserializeUser(function(user, done) {
+  done(null, user);
+});
 
 // ******************************
 // Auth Router
@@ -45,6 +39,21 @@ router.get('/auth/google/callback',
     failureRedirect: '/login'
   })
 );
+
+// ******************************
+// All pages including admin pages
+// ******************************
+router.all('/*', isAuth, function (req, res, next) {
+  next();
+});
+
+// ******************************
+// Home
+// ******************************
+/* GET home page. */
+router.get('/', function(req, res, next) {
+  res.render('index', { title: 'Express' });
+}); 
 
 // ******************************
 // Login & Logout
