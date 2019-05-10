@@ -1,21 +1,25 @@
-var express = require('express');
-var url  = require('url');
-var router = express.Router();
+const express = require('express');
+const url  = require('url');
+const router = express.Router();
 const { dump } = require('dumper.js');
-var _ = require('lodash');
-// var User = require('../models/user');
-var passport = require('passport');
-const LocalStrategy = require('passport-local');
-var { isAuth, googleCallback } = require('./utils');
-require('dotenv').config();
+// const _ = require('lodash');
+// const User = require('../models/user');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const { isAuth, googleCallback } = require('./utils');
+
+// console.log(process.env.port);
+// console.log(process.env.PORT);
+// console.log(process.env.GOOGLE_CALLBACK_URL);
 
 // ******************************
 // Passport
 // ******************************
-passport.use(new LocalStrategy({
+const port = process.env.PORT ? 'http://one.com' : 'http://localhost:3000';
+passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL,
+  callbackURL: `http://localhost:3000/auth/google/callback`,
   passReqToCallback: true
 },
 function(req, accessToken, refreshToken, profile, done) {
@@ -28,7 +32,19 @@ passport.deserializeUser(function(user, done) { done(null, user); });
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
-});
+}); 
+
+
+// ******************************
+// Auth Router
+// ******************************
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google/callback', 
+  passport.authenticate('google', { 
+    successRedirect : '/admin',
+    failureRedirect: '/login'
+  })
+);
 
 // ******************************
 // Login & Logout
@@ -36,7 +52,12 @@ router.get('/', function(req, res, next) {
 // Get
 router.get('/login', function(req, res, next) {
   const loginErr = req.query && req.query.access ? 'Email / Password didn\'t match' : '';
-  res.render('login', { title: 'Welcome to Ending with Berto', loginErr: loginErr });
+  res.render(
+    'login', {
+      title: 'login',
+      loginErr: loginErr
+    }
+  );
 });
 // Post
 router.post('/login', passport.authenticate(
