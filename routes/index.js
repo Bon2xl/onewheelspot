@@ -61,12 +61,16 @@ router.get('/', function(req, res, next) {
 // Get
 router.get('/login', function(req, res, next) {
   const loginErr = req.query && req.query.access ? 'Email / Password didn\'t match' : '';
-  res.render(
-    'login', {
-      title: 'login',
-      loginErr: loginErr
-    }
-  );
+  if (res.locals.isLoggedIn) {
+    res.redirect('/admin');
+  } else{
+    res.render(
+      'login', {
+        title: 'login',
+        loginErr: loginErr
+      }
+    );
+  };
 });
 // Post
 router.post('/login', passport.authenticate(
